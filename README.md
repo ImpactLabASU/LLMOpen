@@ -65,9 +65,10 @@ with torch.no_grad():
         do_sample=True
     )
 print(tok.decode(gen[0], skip_special_tokens=True))
+```
 Load adapter (LoRA/PEFT)
-python
-Copy code
+```python
+
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 
@@ -77,6 +78,7 @@ base_model = "meta-llama/Llama-2-7b-hf"  # replace with the correct base
 tok = AutoTokenizer.from_pretrained(base_model, use_fast=True)
 base = AutoModelForCausalLM.from_pretrained(base_model, device_map="auto", torch_dtype="auto")
 model = PeftModel.from_pretrained(base, ADAPTER_DIR)
+```
 🧪 Reproducing evaluations
 The evaluation pipeline consists of four stages:
 
@@ -85,24 +87,25 @@ Calibrate patient-specific glucose-insulin dynamics using SINDy or EMILY.
 
 Save identified parameters (e.g., theta.json, dyn_params.csv) into data/embodied_prompts/.
 
-bash
-Copy code
+```bash
+
 python scripts/recover_dynamics.py --input patient_cgm.csv --output data/embodied_prompts/patient1.json
 2. Build embodied prompts
 Insert calibrated parameters into planning prompts.
-
+```
 Generates JSONL or plain text instruction data for training.
 
-bash
-Copy code
+```bash
+
 python scripts/build_embodied_prompts.py \
     --dyn data/embodied_prompts/patient1.json \
     --output data/train_prompts/patient1.jsonl
+```
 3. Fine-tuning with PEFT/LoRA
 Train the model or adapters using Hugging Face PEFT.
 
-bash
-Copy code
+```bash
+
 python scripts/finetune.py \
     --base_model meta-llama/Llama-2-7b-hf \
     --train_file data/train_prompts/patient1.jsonl \
@@ -110,25 +113,29 @@ python scripts/finetune.py \
     --peft lora \
     --epochs 3 \
     --batch_size 8
+
+```
 4. Safety verification
 Evaluate generated plans with a safety simulator (e.g., UVA/Padova T1D).
 
 Metrics: TIR (%), TBR (%), time spent <70 mg/dL, plan iteration count.
 
-bash
-Copy code
+```bash
+
 python scripts/verify_plan.py \
     --model model/adapter_patient1 \
     --sim sim/t1d/patient1_sim.json \
     --output results/patient1_eval.csv
+
+```
 Example output:
 
 Patient	TIR (%)	TBR (%)	Hypo events	Iterations
 P1	76.2	1.5	0	2
 
 Suggested project layout
-arduino
-Copy code
+```arduino
+
 LLMOpen/
 ├─ model/                     # model + adapter weights
 ├─ data/
@@ -147,43 +154,47 @@ LLMOpen/
 ├─ notebooks/                 # demo notebooks
 ├─ LICENSE
 └─ README.md
+```
 ⚙️ Environment
-bash
-Copy code
+```bash
+
 conda create -n llmopen python=3.10 -y
 conda activate llmopen
 pip install "transformers>=4.41" accelerate peft torch
 # optional tools:
 pip install numpy scipy pandas matplotlib sentencepiece datasets evaluate
 GPU users: install CUDA-compatible torch wheels from PyTorch.
-
+```
 🔍 Example prompts
 Exercise (novel action):
 
-nginx
-Copy code
+```nginx
+
 I plan 30 mins of interval training in 60 mins. Current CGM 85 mg/dL; ISF 50; CIR 0.36.
 Propose a safe plan (setpoint, snack yes/no & grams, insulin actions), minimize hypoglycemia.
 Plan invalidation (dessert):
+```
+```css
 
-css
-Copy code
 It’s 6 pm; CGM 121 mg/dL; I had a snack at 3 pm. I want a quarter of a 0.5 lb tiramisu.
 Suggest portion and insulin (if any) to keep CGM ≤ 180 mg/dL.
 Pregnancy adaptation:
+```
+```vbnet
 
-vbnet
-Copy code
 Week 6 pregnancy. Suggest day-long meal + exercise plan to keep TIR > 70%,
 assuming increased insulin resistance and morning variability.
+```
+
 📚 Citation
 If you use this code/model, please cite:
 
-arduino
-Copy code
+```arduino
+
 Banerjee, A., & Gupta, S.K.S. (2025).
 Personalized open-world plan generation for safety-critical human-centered autonomous systems:
 A case study on Artificial Pancreas. EMNLP Findings 2025.
+```
 🔒 License
 Please add a license file (MIT, BSD-3-Clause, or Apache-2.0 recommended).
 Until a license is included, usage rights are undefined.
@@ -201,8 +212,6 @@ UVA/Padova T1D safety simulator
 
 We acknowledge NSF, NIH, DARPA FIRE, and Helmsley Charitable Trust projects supporting this research.
 
-yaml
-Copy code
 
 ---
 
